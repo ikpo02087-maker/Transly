@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Speak & Translate</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom right, #6a11cb, #2575fc);
+      color: #fff;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 20px;
+    }
+    select, textarea, button {
+      width: 90%;
+      padding: 12px;
+      margin: 12px 0;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      outline: none;
+    }
+    textarea {
+      resize: none;
+    }
+    button {
+      background: #ff5722;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+      transition: 0.3s;
+    }
+    button:hover {
+      background: #e64a19;
+      transform: translateY(-2px);
+    }
+    select {
+      background: #fff;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🗣️ Speak & Translate</h1>
+
+  <!-- Google AdSense Banner -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+  <ins class="adsbygoogle"
+       style="display:block; text-align:center;"
+       data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+       data-ad-slot="1234567890"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>
+       (adsbygoogle = window.adsbygoogle || []).push({});
+  </script>
+
+  <select id="language">
+    <option value="fr">French</option>
+    <option value="es">Spanish</option>
+    <option value="yo">Yoruba</option>
+    <option value="ha">Hausa</option>
+    <option value="ig">Igbo</option>
+    <option value="de">German</option>
+    <option value="it">Italian</option>
+    <option value="zh-CN">Chinese</option>
+    <option value="ar">Arabic</option>
+  </select>
+
+  <button onclick="startListening()">🎤 Speak</button>
+
+  <h3>Original Text</h3>
+  <textarea id="originalText" rows="5"></textarea>
+
+  <h3>Translated Text</h3>
+  <textarea id="translatedText" rows="5"></textarea>
+
+  <button onclick="speakText()">🔊 Speak Translation</button>
+  <button onclick="showHistory()">📜 Show History</button>
+
+<script>
+  // Speech Recognition
+  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recognition.lang = "en-US";
+
+  function startListening() {
+    recognition.start();
+  }
+
+  recognition.onresult = function(event) {
+    const speech = event.results[0][0].transcript;
+    document.getElementById("originalText").value = speech;
+    translateText(speech);
+  };
+
+  // Translation
+  function translateText(text) {
+    const targetLang = document.getElementById("language").value;
+
+    fetch("https://api.mymemory.translated.net/get?q=" + encodeURIComponent(text) + "&langpair=en|" + targetLang)
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("translatedText").value = data.responseData.translatedText;
+        saveHistory(text, data.responseData.translatedText); // save history
+      });
+  }
+
+  // Speak translation
+  function speakText() {
+    const text = document.getElementById("translatedText").value;
+    const msg = new SpeechSynthesisUtterance(text);
+    speechSynthesis.speak(msg);
+  }
+
+  // History save & show
+  function saveHistory(original, translated) {
+    let history = JSON.parse(localStorage.getItem('translationHistory')) || [];
+    history.push({ original, translated, time: new Date().toLocaleString() });
+    localStorage.setItem('translationHistory', JSON.stringify(history));
+  }
+
+  function showHistory() {
+    let history = JSON.parse(localStorage.getItem('translationHistory')) || [];
+    if(history.length === 0) {
+      alert("No history yet!");
+      return;
+    }
+    let text = history.map(h => `${h.time}\n${h.original} → ${h.translated}`).join('\n\n');
+    alert("📜 Translation History:\n\n" + text);
+  }
+</script>
+
+</body>
+</html>
